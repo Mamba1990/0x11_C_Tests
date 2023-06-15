@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #define BUFFER_SIZE 1024
-
+#define ARGUMENTS_SIZE 64
 void simple_shell(void);
 
 #endif

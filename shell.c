@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 #include <string.h>
 
+#define ARGUMENTS_SIZE 64
 #define BUFFER_SIZE 1024
 
 extern char **environ; /* Declare the environ variable*/
@@ -14,7 +15,7 @@ int simple_shell(void)
     size_t bufsize = BUFFER_SIZE;
     ssize_t line_size;
     int status;
-    char *arguments[bufsize];
+    char **arguments;
     char *command;
     int arg_count;
     char *token;
@@ -58,8 +59,23 @@ int simple_shell(void)
         
         while (token != NULL)
         {
-            arguments[arg_count++] = token;
+        	 arguments[arg_count] = token;
+           	 arg_count++;
+
+            	if (arg_count >= ARGUMENTS_SIZE)
+            	{
+                	ARGUMENTS_SIZE *= 2;
+                	arguments = (char **)realloc(arguments, ARGUMENTS_SIZE * sizeof(char *));
+                	if (arguments == NULL)
+                	{
+                    		perror("realloc error");
+                    		exit(EXIT_FAILURE);
+                	}
+            	}	
+
+            	token = strtok(NULL, " ");
         }
+
         arguments[arg_count] = NULL;
 
         if (fork() == 0)
