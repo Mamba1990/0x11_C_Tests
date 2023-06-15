@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <string.h>
 
 #define BUFFER_SIZE 1024
 
@@ -13,6 +14,10 @@ int simple_shell(void)
     size_t bufsize = BUFFER_SIZE;
     ssize_t line_size;
     int status;
+    char *arguments[bufsize];
+    char *command;
+    int arg_count;
+    char *token;
 
     buffer = (char *)malloc(bufsize * sizeof(char));
     if (buffer == NULL)
@@ -43,6 +48,19 @@ int simple_shell(void)
         buffer[line_size - 1] = '\0'; /* Remove the trailing newline character*/
 
         /* Execute the command*/
+
+	/* Tokenize the command and arguments*/
+
+        command = strtok(buffer, " ");
+        arguments[0] = command;
+        arg_count = 1;
+	token = strtok(NULL, " ");
+        
+        while (token != NULL)
+        {
+            arguments[arg_count++] = token;
+        }
+        arguments[arg_count] = NULL;
 
         if (fork() == 0)
         {
