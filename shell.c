@@ -4,7 +4,7 @@
 #include <sys/wait.h>
 #include <string.h>
 
-#define ARGUMENTS_SIZE 64
+
 #define BUFFER_SIZE 1024
 
 extern char **environ; /* Declare the environ variable*/
@@ -17,8 +17,9 @@ int simple_shell(void)
     int status;
     char **arguments;
     char *command;
-    int arg_count;
+    size_t arg_count;
     char *token;
+    size_t arguments_size = 64;
 
     buffer = (char *)malloc(bufsize * sizeof(char));
     if (buffer == NULL)
@@ -62,10 +63,10 @@ int simple_shell(void)
         	 arguments[arg_count] = token;
            	 arg_count++;
 
-            	if (arg_count >= ARGUMENTS_SIZE)
+            	if (arg_count >= arguments_size)
             	{
-                	ARGUMENTS_SIZE *= 2;
-                	arguments = (char **)realloc(arguments, ARGUMENTS_SIZE * sizeof(char *));
+                	arguments_size *= 2;
+                	arguments = (char **)realloc(arguments, arguments_size * sizeof(char *));
                 	if (arguments == NULL)
                 	{
                     		perror("realloc error");
