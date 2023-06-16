@@ -10,118 +10,123 @@ extern char **environ; /* Declare the environ variable*/
 
 void free_arguments(char **arguments)
 {
-	int i;
+    int i;
 
-	if (arguments == NULL)
-		return;
+    if (arguments == NULL)
+        return;
 
-	for (i = 0; arguments[i] != NULL; i++)
-		free(arguments[i]);
+    for (i = 0; arguments[i] != NULL; i++)
+        free(arguments[i]);
 
-	free(arguments);
+    free(arguments);
 }
 
-int simple_shell(void)
+int simple_shell(int mode)
 {
-	char *buffer;
-	size_t bufsize = BUFFER_SIZE;
-	ssize_t line_size;
-	int status;
-	char **arguments;
-	char *command;
-	size_t arg_count;
-	char *token;
-	size_t arguments_size = 64;
+    char *buffer;
+    size_t bufsize = BUFFER_SIZE;
+    ssize_t line_size;
+    int status;
+    char **arguments;
+    char *command;
+    size_t arg_count;
+    char *token;
+    size_t arguments_size = 64;
 
-	buffer = (char *)malloc(bufsize * sizeof(char));
-	if (buffer == NULL)
-	{
-		perror("malloc error");
-		exit(EXIT_FAILURE);
-	}
+    buffer = (char *)malloc(bufsize * sizeof(char));
+    if (buffer == NULL)
+    {
+        perror("malloc error");
+        exit(EXIT_FAILURE);
+    }
 
-	while (1)
-	{
-		printf("$ "); /* Display prompt */
+    while (1)
+    {
+        if (mode == 1)
+            printf("$ "); /* Display prompt */
 
-		line_size = getline(&buffer, &bufsize, stdin);
-		if (line_size == -1)
-		{
-			if (feof(stdin))
-			{
-				printf("\n"); /* Handle end of file (Ctrl+D) */
-				break;
-			}
-			else
-			{
-				perror("getline error");
-				exit(EXIT_FAILURE);
-			}
-		}
+        line_size = getline(&buffer, &bufsize, stdin);
+        if (line_size == -1)
+        {
+            if (feof(stdin))
+            {
+                printf("\n"); /* Handle end of file (Ctrl+D) */
+                break;
+            }
+            else
+            {
+                perror("getline error");
+                exit(EXIT_FAILURE);
+            }
+        }
 
-		buffer[line_size - 1] = '\0'; /* Remove the trailing newline character */
+        buffer[line_size - 1] = '\0'; /* Remove the trailing newline character */
 
-		/* Execute the command */
+        printf("Input Buffer: %s\n", buffer);
 
-		/* Tokenize the command and arguments */
+        /* Tokenize the command and arguments */
+        printf("Tokenizing: %s\n", buffer);
 
-		command = strtok(buffer, " ");
-		arguments = (char **)malloc((arguments_size + 1) * sizeof(char *));
-		if (arguments == NULL)
-		{
-			perror("malloc error");
-			exit(EXIT_FAILURE);
-		}
-		arguments[0] = command;
-		arg_count = 1;
-		token = strtok(NULL, " ");
+        command = strtok(buffer, " ");
+        arguments = (char **)malloc((arguments_size + 1) * sizeof(char *));
+        if (arguments == NULL)
+        {
+            perror("malloc error");
+            exit(EXIT_FAILURE);
+        }
+        arguments[0] = command;
+        arg_count = 1;
+        token = strtok(NULL, " ");
 
-		while (token != NULL)
-		{
-			arguments[arg_count] = strdup(token);
-			if (arguments[arg_count] == NULL)
-			{
-				perror("strdup error");
-				free_arguments(arguments);
-				exit(EXIT_FAILURE);
-			}
-			arg_count++;
+        while (token != NULL)
+        {
+            printf("Token: %s\n", token);
 
-			if (arg_count >= arguments_size)
-			{
-				arguments_size *= 2;
-				arguments = (char **)realloc(arguments, (arguments_size + 1) * sizeof(char *));
-				if (arguments == NULL)
-				{
-					perror("realloc error");
-					free_arguments(arguments);
-					exit(EXIT_FAILURE);
-				}
-			}
+            arguments[arg_count] = strdup(token);
+            if (arguments[arg_count] == NULL)
+            {
+                perror("strdup error");
+                free_arguments(arguments);
+                exit(EXIT_FAILURE);
+            }
+            arg_count++;
 
-			token = strtok(NULL, " ");
-		}
+            if (arg_count >= arguments_size)
+            {
+                arguments_size *= 2;
+                arguments = (char **)realloc(arguments, (arguments_size + 1) * sizeof(char *));
+                if (arguments == NULL)
+                {
+                    perror("realloc error");
+                    free_arguments(arguments);
+                    exit(EXIT_FAILURE);
+                }
+            }
 
-		arguments[arg_count] = NULL;
+            token = strtok(NULL, " ");
+        }
 
-		if (fork() == 0)
-		{
-			/* Child process */
-			if (execve(command, arguments, environ) == -1) /* Pass environ to execve */
-			{
-				perror("execve error");
-				free_arguments(arguments);
-				exit(EXIT_FAILURE);
-			}
-		}
-		else
-		{
-			/* Parent process */
-			wait(&status); /* Wait for the child process to finish */
-		}
-	       	
-	}
+        arguments[arg_count] = NULL;
 
-	free(buffer);
-	return 0;
+        if (fork() == 0)
+        {
+            /* Child process */
+            printf("Executing command: %s\n", command);
+            execve(command, arguments, environ); /* Pass environ to execve */
+
+            perror("execve error");
+            free_arguments(arguments);
+            exit(EXIT_FAILURE);
+        }
+        else
+        {
+            /* Parent process */
+            wait(&status); /* Wait for the child process to finish */
+            printf("Child process finished\n");
+        }
+    }
+
+    free(buffer);
+    return 0;
 }
+
