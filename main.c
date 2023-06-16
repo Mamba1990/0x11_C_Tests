@@ -3,7 +3,8 @@
 #include <unistd.h>
 #include "shell.h"
 
-int main(void)
+
+int main()
 {
     int mode;
 
@@ -13,21 +14,17 @@ int main(void)
     printf("Enter mode (1 or 2): ");
     scanf("%d", &mode);
 
-    if (mode == 1)
+    while (getchar() != '\n'); /* Clear the input buffer */
+
+    if (mode == 1 || mode == 2)
     {
-        /* Interactive mode */
-        simple_shell(1);
-    }
-    else if (mode == 2)
-    {
-        /*  Non-interactive mode */
-        simple_shell(0);
+        simple_shell(mode);
     }
     else
     {
-        printf("Invalid mode. Please try again.\n");
-        return 1;
+        printf("Invalid mode. Please enter 1 or 2.\n");
     }
 
     return 0;
 }
+
