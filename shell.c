@@ -21,14 +21,41 @@ void free_arguments(char **arguments)
     free(arguments);
 }
 
+void execute_command(char *command, char **arguments)
+{
+    pid_t pid;
+    int status;
+
+    pid = fork();
+    if (pid < 0)
+    {
+        perror("fork error");
+        exit(EXIT_FAILURE);
+    }
+    else if (pid == 0)
+    {
+        /* Child process */
+        if (execvp(command, arguments) == -1)
+        {
+            perror("execvp error");
+            free_arguments(arguments);
+            exit(EXIT_FAILURE);
+        }
+    }
+    else
+    {
+        /* Parent process */
+        waitpid(pid, &status, 0);
+    }
+}
+
 int simple_shell(int mode)
 {
     char *buffer;
     size_t bufsize = BUFFER_SIZE;
     ssize_t line_size;
-    int status;
-    char **arguments;
     char *command;
+    char **arguments;
     size_t arg_count;
     char *token;
     size_t arguments_size = 64;
@@ -46,6 +73,7 @@ int simple_shell(int mode)
             printf("$ "); /* Display prompt */
 
         line_size = getline(&buffer, &bufsize, stdin);
+
         if (line_size == -1)
         {
             if (feof(stdin))
@@ -62,11 +90,13 @@ int simple_shell(int mode)
 
         buffer[line_size - 1] = '\0'; /* Remove the trailing newline character */
 
-        printf("Input Buffer: %s\n", buffer);
+        if (strlen(buffer) == 0)
+            continue; /* Skip processing if buffer is empty */
+
+        if (mode == 2)
+            printf("%s\n", buffer); /* Print the command in non-interactive mode */
 
         /* Tokenize the command and arguments */
-        printf("Tokenizing: %s\n", buffer);
-
         command = strtok(buffer, " ");
         arguments = (char **)malloc((arguments_size + 1) * sizeof(char *));
         if (arguments == NULL)
@@ -80,8 +110,6 @@ int simple_shell(int mode)
 
         while (token != NULL)
         {
-            printf("Token: %s\n", token);
-
             arguments[arg_count] = strdup(token);
             if (arguments[arg_count] == NULL)
             {
@@ -108,22 +136,12 @@ int simple_shell(int mode)
 
         arguments[arg_count] = NULL;
 
-        if (fork() == 0)
-        {
-            /* Child process */
-            printf("Executing command: %s\n", command);
-            execve(command, arguments, environ); /* Pass environ to execve */
+        if (strcmp(command, "exit") == 0)
+            break; /* Exit the shell if the command is "exit" */
 
-            perror("execve error");
-            free_arguments(arguments);
-            exit(EXIT_FAILURE);
-        }
-        else
-        {
-            /* Parent process */
-            wait(&status); /* Wait for the child process to finish */
-            printf("Child process finished\n");
-        }
+        execute_command(command, arguments);
+
+        free_arguments(arguments);
     }
 
     free(buffer);
