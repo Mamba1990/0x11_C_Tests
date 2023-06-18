@@ -154,7 +154,7 @@ int simple_shell(int mode)
             printf("PATH environment variable is not set. Unable to locate command.\n");
         }
 
-        free_arguments(arguments);
+        
     }
 
     free(buffer);
