@@ -130,7 +130,6 @@ int simple_shell(int mode)
                         execve(full_path, arguments, environ); /* Pass environ to execve */
 
                         perror("execve error");
-                        free_arguments(arguments);
                         exit(EXIT_FAILURE);
                     }
                     else
@@ -151,7 +150,7 @@ int simple_shell(int mode)
             printf("PATH environment variable is not set. Unable to locate command.\n");
         }
 
-        free_arguments(arguments);
+/*        free_arguments(arguments);*/
     }
 
     free(buffer);
