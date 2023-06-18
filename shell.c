@@ -14,7 +14,6 @@ void free_arguments(char **arguments)
 
     if (arguments == NULL)
         return;
-
     for (i = 0; arguments[i] != NULL; i++)
         free(arguments[i]);
 
@@ -23,23 +22,19 @@ void free_arguments(char **arguments)
 
 int simple_shell(int mode)
 {
-    char *buffer;
-    size_t bufsize = BUFFER_SIZE;
+    char *buffer = NULL;
+    size_t bufsize = 0;
     ssize_t line_size;
     int status;
-    char **arguments;
+    char **arguments = NULL;
     char *command;
     size_t arg_count;
     char *token;
     size_t arguments_size = 64;
     char *path;
-
-    buffer = (char *)malloc(bufsize * sizeof(char));
-    if (buffer == NULL)
-    {
-        perror("malloc error");
-        exit(EXIT_FAILURE);
-    }
+    char *full_path;
+    char *path_env;
+    char *path_token;
 
     while (1)
     {
@@ -104,7 +99,6 @@ int simple_shell(int mode)
         /* Check if the command is "exit" */
         if (strcmp(command, "exit") == 0)
         {
-            
             break; /* Exit the loop if the command is "exit" */
         }
 
@@ -112,10 +106,17 @@ int simple_shell(int mode)
         path = getenv("PATH");
         if (path != NULL)
         {
-            char *path_token = strtok(path, ":");
+            path_env = strdup(path);
+            if (path_env == NULL)
+            {
+                perror("strdup error");
+                exit(EXIT_FAILURE);
+            }
+
+            path_token = strtok(path_env, ":");
             while (path_token != NULL)
             {
-                char *full_path = malloc(strlen(path_token) + strlen(command) + 2); /* 2 for '/' and '\0' */
+                full_path = malloc(strlen(path_token) + strlen(command) + 2); /* 2 for '/' and '\0' */
                 if (full_path == NULL)
                 {
                     perror("malloc error");
@@ -147,17 +148,16 @@ int simple_shell(int mode)
                 free(full_path);
                 path_token = strtok(NULL, ":");
             }
+
+            free(path_env);
         }
         else
         {
             /* PATH environment variable is not set */
             printf("PATH environment variable is not set. Unable to locate command.\n");
         }
-
-        
     }
 
     free(buffer);
-    return 0;
+    return 1; /* Return 1 to indicate successful termination */
 }
-
