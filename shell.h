@@ -1,5 +1,5 @@
 #ifndef _SHELL_H_
-#define _SHELL_H8
+#define _SHELL_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,14 +7,12 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#define MAX_COMMAND_LENGTH 100
-#define MAX_PATH_LENGTH 100
-void print_prompt(void);
-char *read_command(void);
-void execute_command(char *command);
-void handle_exit(void);
-void handle_env(void);
 
+
+
+#define BUFFER_SIZE 1024
+void free_arguments(char **arguments);
+int simple_shell(int mode);
 
 
 #endif

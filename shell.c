@@ -1,66 +1,127 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include "shell.h"
+#include <string.h>
 
-#define MAX_COMMAND_LENGTH 100
-#define MAX_PATH_LENGTH 100
+#define BUFFER_SIZE 1024
 
-void print_prompt(void)
+extern char **environ; /* Declare the environ variable*/
+
+void free_arguments(char **arguments)
 {
-    printf("simple_shell$ ");
-    fflush(stdout);
+    int i;
+
+    if (arguments == NULL)
+        return;
+
+    for (i = 0; arguments[i] != NULL; i++)
+        free(arguments[i]);
+
+    free(arguments);
 }
 
-char *read_command(void)
+int simple_shell(int mode)
 {
-	char *command;
-    	command = (char *)malloc(MAX_COMMAND_LENGTH * sizeof(char));
-    	fgets(command, MAX_COMMAND_LENGTH, stdin);
-    	return (command);
-}
+    char *buffer;
+    size_t bufsize = BUFFER_SIZE;
+    ssize_t line_size;
+    int status;
+    char **arguments;
+    char *command;
+    size_t arg_count;
+    char *token;
+    size_t arguments_size = 64;
 
-void execute_command(char *command)
-{
-	int status;
-	pid_t pid;
-    	command[strcspn(command, "\n")] = '\0';  /* Remove the newline character */
-    	pid = fork();
-	if (pid < 0)
-       	{
-        	perror("fork");
-        	return;
-	}
-    	else if (pid == 0)
+    buffer = (char *)malloc(bufsize * sizeof(char));
+    if (buffer == NULL)
+    {
+        perror("malloc error");
+        exit(EXIT_FAILURE);
+    }
+
+    while (1)
+    {
+        if (mode == 1)
+            printf("$ "); /* Display prompt */
+
+        line_size = getline(&buffer, &bufsize, stdin);
+        if (line_size == -1)
+        {
+            if (feof(stdin))
+            {
+                printf("\n"); /* Handle end of file (Ctrl+D) */
+                break;
+            }
+            else
+            {
+                perror("getline error");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        buffer[line_size - 1] = '\0'; /* Remove the trailing newline character */
+
+
+        /* Tokenize the command and arguments */
+
+        command = strtok(buffer, " ");
+        arguments = (char **)malloc((arguments_size + 1) * sizeof(char *));
+        if (arguments == NULL)
+        {
+            perror("malloc error");
+            exit(EXIT_FAILURE);
+        }
+        arguments[0] = command;
+        arg_count = 1;
+        token = strtok(NULL, " ");
+
+        while (token != NULL)
 	{
-        						/* Child process */
-		if (execlp(command, command, NULL) == -1)
-	       	{
-            		printf("Command not found: %s\n", command);
-           		exit(1);
-        	}	
-        	exit(0);
-	}
-    	else
-       	{
-        /* Parent process */
-		waitpid(pid, &status, 0);
-    	}
+
+            arguments[arg_count] = strdup(token);
+            if (arguments[arg_count] == NULL)
+            {
+                perror("strdup error");
+                free_arguments(arguments);
+                exit(EXIT_FAILURE);
+            }
+            arg_count++;
+
+            if (arg_count >= arguments_size)
+            {
+                arguments_size *= 2;
+                arguments = (char **)realloc(arguments, (arguments_size + 1) * sizeof(char *));
+                if (arguments == NULL)
+                {
+                    perror("realloc error");
+                    free_arguments(arguments);
+                    exit(EXIT_FAILURE);
+                }
+            }
+
+            token = strtok(NULL, " ");
+        }
+
+        arguments[arg_count] = NULL;
+
+        if (fork() == 0)
+        {
+            /* Child process */
+            execve(command, arguments, environ); /* Pass environ to execve */
+
+            perror("execve error");
+            free_arguments(arguments);
+            exit(EXIT_FAILURE);
+        }
+        else
+        {
+            /* Parent process */
+            wait(&status); /* Wait for the child process to finish */
+        }
+    }
+
+    free(buffer);
+    return 0;
 }
 
-void handle_exit(void)
-{
-	exit (0);
-}
-
-void handle_env(void)
-{
-	extern char **environ;
-	int i;
-    	for (i = 0; environ[i] != NULL; i++)
-       	{
-        	printf("%s\n", environ[i]);
-    	}
-}
