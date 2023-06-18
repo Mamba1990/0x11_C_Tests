@@ -2,29 +2,43 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "shell.h"
-
-
-int main()
+int main(void)
 {
-    int mode;
+	char *command;
+    	while (1) 
+	{
+        	print_prompt();
+       		command = read_command();
 
-    printf("Select mode:\n");
-    printf("1. Interactive Mode\n");
-    printf("2. Non-Interactive Mode\n");
-    printf("Enter mode (1 or 2): ");
-    scanf("%d", &mode);
+        if (command == NULL) 
+	{
+            	printf("\n");
+            	handle_exit();
+        }
 
-    while (getchar() != '\n'); /* Clear the input buffer */
+        if (strcmp(command, "exit") == 0) 
+	{
+            	handle_exit();
+        } 
+	else if (strcmp(command, "env") == 0) 
+	{
+            	handle_env();
+        }
+       	else
+       	{
+            	execute_command(command);
+        }
 
-    if (mode == 1 || mode == 2)
-    {
-        simple_shell(mode);
-    }
-    else
-    {
-        printf("Invalid mode. Please enter 1 or 2.\n");
+        free(command);
     }
 
     return 0;
 }
+
+
+
+
+
+
+
 
