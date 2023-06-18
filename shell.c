@@ -6,7 +6,7 @@
 
 #define BUFFER_SIZE 1024
 
-extern char **environ; /* Declare the environ variable*/
+extern char **environ; /* Declare the environ variable */
 
 void free_arguments(char **arguments)
 {
@@ -32,6 +32,7 @@ int simple_shell(int mode)
     size_t arg_count;
     char *token;
     size_t arguments_size = 64;
+    char *path;
 
     buffer = (char *)malloc(bufsize * sizeof(char));
     if (buffer == NULL)
@@ -62,9 +63,7 @@ int simple_shell(int mode)
 
         buffer[line_size - 1] = '\0'; /* Remove the trailing newline character */
 
-
         /* Tokenize the command and arguments */
-
         command = strtok(buffer, " ");
         arguments = (char **)malloc((arguments_size + 1) * sizeof(char *));
         if (arguments == NULL)
@@ -77,8 +76,7 @@ int simple_shell(int mode)
         token = strtok(NULL, " ");
 
         while (token != NULL)
-	{
-
+        {
             arguments[arg_count] = strdup(token);
             if (arguments[arg_count] == NULL)
             {
@@ -105,20 +103,55 @@ int simple_shell(int mode)
 
         arguments[arg_count] = NULL;
 
-        if (fork() == 0)
+        /* Check if the command exists in the PATH before calling fork */
+        path = getenv("PATH");
+        if (path != NULL)
         {
-            /* Child process */
-            execve(command, arguments, environ); /* Pass environ to execve */
+            char *path_token = strtok(path, ":");
+            while (path_token != NULL)
+            {
+                char *full_path = malloc(strlen(path_token) + strlen(command) + 2); /* 2 for '/' and '\0' */
+                if (full_path == NULL)
+                {
+                    perror("malloc error");
+                    free_arguments(arguments);
+                    exit(EXIT_FAILURE);
+                }
+                strcpy(full_path, path_token);
+                strcat(full_path, "/");
+                strcat(full_path, command);
 
-            perror("execve error");
-            free_arguments(arguments);
-            exit(EXIT_FAILURE);
+                if (access(full_path, X_OK) == 0)
+                {
+                    /* Command exists in the PATH, call fork and execve */
+                    if (fork() == 0)
+                    {
+                        /* Child process */
+                        execve(full_path, arguments, environ); /* Pass environ to execve */
+
+                        perror("execve error");
+                        free_arguments(arguments);
+                        exit(EXIT_FAILURE);
+                    }
+                    else
+                    {
+                        /* Parent process */
+                        wait(&status); /* Wait for the child process to finish */
+                    }
+                    free(full_path);
+                    break; /* Exit the loop if the command is found and executed */
+                }
+                free(full_path);
+                path_token = strtok(NULL, ":");
+            }
         }
         else
         {
-            /* Parent process */
-            wait(&status); /* Wait for the child process to finish */
+            /* PATH environment variable is not set */
+            printf("PATH environment variable is not set. Unable to locate command.\n");
         }
+
+        free_arguments(arguments);
     }
 
     free(buffer);
