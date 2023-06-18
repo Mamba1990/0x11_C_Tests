@@ -81,7 +81,6 @@ int simple_shell(int mode)
             if (arguments[arg_count] == NULL)
             {
                 perror("strdup error");
-                free_arguments(arguments);
                 exit(EXIT_FAILURE);
             }
             arg_count++;
@@ -93,7 +92,6 @@ int simple_shell(int mode)
                 if (arguments == NULL)
                 {
                     perror("realloc error");
-                    free_arguments(arguments);
                     exit(EXIT_FAILURE);
                 }
             }
@@ -102,6 +100,13 @@ int simple_shell(int mode)
         }
 
         arguments[arg_count] = NULL;
+
+        /* Check if the command is "exit" */
+        if (strcmp(command, "exit") == 0)
+        {
+            
+            break; /* Exit the loop if the command is "exit" */
+        }
 
         /* Check if the command exists in the PATH before calling fork */
         path = getenv("PATH");
@@ -114,7 +119,6 @@ int simple_shell(int mode)
                 if (full_path == NULL)
                 {
                     perror("malloc error");
-                    free_arguments(arguments);
                     exit(EXIT_FAILURE);
                 }
                 strcpy(full_path, path_token);
@@ -150,7 +154,7 @@ int simple_shell(int mode)
             printf("PATH environment variable is not set. Unable to locate command.\n");
         }
 
-/*        free_arguments(arguments);*/
+        free_arguments(arguments);
     }
 
     free(buffer);
