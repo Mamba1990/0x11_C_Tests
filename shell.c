@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -6,16 +5,15 @@
 #include <string.h>
 #include "shell.h"
 
-
 #define BUFF_SIZE 1024
 extern char **environ; /* Declare the environ variable */
+
 /**
  * freeArguments - frees arguments
- * @args: pointer to an array of strings 
+ * @args: pointer to an array of strings
  *
  * Return: void
  */
-
 void freeArguments(char **args)
 {
     int i;
@@ -43,6 +41,7 @@ int my_simple_shell(int mode)
     char *fullPath;
     char *pathEnv;
     char *pathToken;
+    int cmdFound;
 
     while (1)
     {
@@ -80,7 +79,7 @@ int my_simple_shell(int mode)
 
         while (token != NULL)
         {
-            args[argCount] = str_dup(token);
+            args[argCount] = strdup(token);
             if (args[argCount] == NULL)
             {
                 perror("strdup error");
@@ -105,7 +104,7 @@ int my_simple_shell(int mode)
         args[argCount] = NULL;
 
         /* Check if the command is "exit" */
-        if (str_cmp(cmd, "exit") == 0)
+        if (strcmp(cmd, "exit") == 0)
         {
             break; /* Exit the loop if the command is "exit" */
         }
@@ -122,6 +121,8 @@ int my_simple_shell(int mode)
             }
 
             pathToken = strtok(pathEnv, ":");
+            cmdFound = 0; /* Flag to indicate if the command is found*/
+
             while (pathToken != NULL)
             {
                 fullPath = malloc(str_len(pathToken) + str_len(cmd) + 2); /* 2 for '/' and '\0' */
@@ -150,7 +151,8 @@ int my_simple_shell(int mode)
                         /* Parent process */
                         wait(&status); /* Wait for the child process to finish */
                     }
-                    free(fullPath);
+                    /*free(fullPath);*/
+                    cmdFound = 1; /* Set the flag to indicate command is found*/
                     break; /* Exit the loop if the command is found and executed */
                 }
                 free(fullPath);
@@ -158,6 +160,11 @@ int my_simple_shell(int mode)
             }
 
             free(pathEnv);
+
+            if (!cmdFound)
+            {
+                printf("Command not found: %s\n", cmd);
+            }
         }
         else
         {
@@ -166,6 +173,7 @@ int my_simple_shell(int mode)
         }
     }
 
+    freeArguments(args);
     free(buff);
-    return 1; /* Return 1 to indicate successful termination */
+    return 1; /* Return 1 to indicate */
 }

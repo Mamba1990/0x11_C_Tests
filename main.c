@@ -5,6 +5,7 @@
 
 int main(void)
 {
+
     int mode;
 
     printf("Select mode:\n");
@@ -13,7 +14,8 @@ int main(void)
     printf("Enter mode (1 or 2): ");
     scanf("%d", &mode);
 
-    while (getchar() != '\n'); /* Clear the input buffer */
+    while (getchar() != '\n');
+      	
 
     if (mode == 1 || mode == 2)
     {
