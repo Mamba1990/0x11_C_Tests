@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "shell.h"
 
-int main()
+int main(void)
 {
     int mode;
 
@@ -17,7 +17,7 @@ int main()
 
     if (mode == 1 || mode == 2)
     {
-        simple_shell(mode);
+        my_simple_shell(mode);
     }
     else
     {

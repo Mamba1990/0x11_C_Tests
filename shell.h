@@ -7,16 +7,14 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-
-
-
 #define BUFFER_SIZE 1024
-void free_arguments(char **arguments);
-char *find_command(char *command);
-int execute_command(char *command, char **arguments);
-void handle_exit();
-void handle_env();
-int simple_shell(int mode);
-
+void freeArguments(char **args);
+char *str_dup(const char *string);
+int my_simple_shell(int mode);
+int str_len(char *s);
+int str_cmp(char *s1, char *s2);
+char *str_cpy(char *dest, char *src);
+char *str_cat(char *dest, char *src);
+void *__realloc(void *ptr, size_t size);
 
 #endif

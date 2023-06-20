@@ -1,48 +1,56 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <string.h>
+#include "shell.h"
 
-#define BUFFER_SIZE 1024
 
+#define BUFF_SIZE 1024
 extern char **environ; /* Declare the environ variable */
+/**
+ * freeArguments - frees arguments
+ * @args: pointer to an array of strings 
+ *
+ * Return: void
+ */
 
-void free_arguments(char **arguments)
+void freeArguments(char **args)
 {
     int i;
 
-    if (arguments == NULL)
+    if (args == NULL)
         return;
-    for (i = 0; arguments[i] != NULL; i++)
-        free(arguments[i]);
+    for (i = 0; args[i] != NULL; i++)
+        free(args[i]);
 
-    free(arguments);
+    free(args);
 }
 
-int simple_shell(int mode)
+int my_simple_shell(int mode)
 {
-    char *buffer = NULL;
+    char *buff = NULL;
     size_t bufsize = 0;
-    ssize_t line_size;
+    ssize_t lineSize;
     int status;
-    char **arguments = NULL;
-    char *command;
-    size_t arg_count;
+    char **args = NULL;
+    char *cmd;
+    size_t argCount;
     char *token;
     size_t arguments_size = 64;
     char *path;
-    char *full_path;
-    char *path_env;
-    char *path_token;
+    char *fullPath;
+    char *pathEnv;
+    char *pathToken;
 
     while (1)
     {
         if (mode == 1)
             printf("$ "); /* Display prompt */
 
-        line_size = getline(&buffer, &bufsize, stdin);
-        if (line_size == -1)
+        lineSize = getline(&buff, &bufsize, stdin);
+        if (lineSize == -1)
         {
             if (feof(stdin))
             {
@@ -56,35 +64,35 @@ int simple_shell(int mode)
             }
         }
 
-        buffer[line_size - 1] = '\0'; /* Remove the trailing newline character */
+        buff[lineSize - 1] = '\0'; /* Remove the trailing newline character */
 
         /* Tokenize the command and arguments */
-        command = strtok(buffer, " ");
-        arguments = (char **)malloc((arguments_size + 1) * sizeof(char *));
-        if (arguments == NULL)
+        cmd = strtok(buff, " ");
+        args = (char **)malloc((arguments_size + 1) * sizeof(char *));
+        if (args == NULL)
         {
             perror("malloc error");
             exit(EXIT_FAILURE);
         }
-        arguments[0] = command;
-        arg_count = 1;
+        args[0] = cmd;
+        argCount = 1;
         token = strtok(NULL, " ");
 
         while (token != NULL)
         {
-            arguments[arg_count] = strdup(token);
-            if (arguments[arg_count] == NULL)
+            args[argCount] = str_dup(token);
+            if (args[argCount] == NULL)
             {
                 perror("strdup error");
                 exit(EXIT_FAILURE);
             }
-            arg_count++;
+            argCount++;
 
-            if (arg_count >= arguments_size)
+            if (argCount >= arguments_size)
             {
                 arguments_size *= 2;
-                arguments = (char **)realloc(arguments, (arguments_size + 1) * sizeof(char *));
-                if (arguments == NULL)
+                args = (char **)__realloc(args, (arguments_size + 1) * sizeof(char *));
+                if (args == NULL)
                 {
                     perror("realloc error");
                     exit(EXIT_FAILURE);
@@ -94,10 +102,10 @@ int simple_shell(int mode)
             token = strtok(NULL, " ");
         }
 
-        arguments[arg_count] = NULL;
+        args[argCount] = NULL;
 
         /* Check if the command is "exit" */
-        if (strcmp(command, "exit") == 0)
+        if (str_cmp(cmd, "exit") == 0)
         {
             break; /* Exit the loop if the command is "exit" */
         }
@@ -106,33 +114,33 @@ int simple_shell(int mode)
         path = getenv("PATH");
         if (path != NULL)
         {
-            path_env = strdup(path);
-            if (path_env == NULL)
+            pathEnv = strdup(path);
+            if (pathEnv == NULL)
             {
                 perror("strdup error");
                 exit(EXIT_FAILURE);
             }
 
-            path_token = strtok(path_env, ":");
-            while (path_token != NULL)
+            pathToken = strtok(pathEnv, ":");
+            while (pathToken != NULL)
             {
-                full_path = malloc(strlen(path_token) + strlen(command) + 2); /* 2 for '/' and '\0' */
-                if (full_path == NULL)
+                fullPath = malloc(str_len(pathToken) + str_len(cmd) + 2); /* 2 for '/' and '\0' */
+                if (fullPath == NULL)
                 {
                     perror("malloc error");
                     exit(EXIT_FAILURE);
                 }
-                strcpy(full_path, path_token);
-                strcat(full_path, "/");
-                strcat(full_path, command);
+                str_cpy(fullPath, pathToken);
+                str_cat(fullPath, "/");
+                str_cat(fullPath, cmd);
 
-                if (access(full_path, X_OK) == 0)
+                if (access(fullPath, X_OK) == 0)
                 {
                     /* Command exists in the PATH, call fork and execve */
                     if (fork() == 0)
                     {
                         /* Child process */
-                        execve(full_path, arguments, environ); /* Pass environ to execve */
+                        execve(fullPath, args, environ); /* Pass environ to execve */
 
                         perror("execve error");
                         exit(EXIT_FAILURE);
@@ -142,14 +150,14 @@ int simple_shell(int mode)
                         /* Parent process */
                         wait(&status); /* Wait for the child process to finish */
                     }
-                    free(full_path);
+                    free(fullPath);
                     break; /* Exit the loop if the command is found and executed */
                 }
-                free(full_path);
-                path_token = strtok(NULL, ":");
+                free(fullPath);
+                pathToken = strtok(NULL, ":");
             }
 
-            free(path_env);
+            free(pathEnv);
         }
         else
         {
@@ -158,6 +166,6 @@ int simple_shell(int mode)
         }
     }
 
-    free(buffer);
+    free(buff);
     return 1; /* Return 1 to indicate successful termination */
 }
