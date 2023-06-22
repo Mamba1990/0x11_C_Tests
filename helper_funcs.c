@@ -1,35 +1,45 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "shell.h"
-/*
- * str_dup - duplicates a string
- * @str: string input
- *
- * Return: pointer to the duplicated string
- */
-char *str_dup(const char *string)
-{
-	int len;
-	char *_r;
+#include <stdlib.h>
+#include <string.h>
 
-	if (string == NULL)
-		return (NULL);
-	for (len = 0; *string++; len++)
-		len++;
-	_r = malloc(sizeof(char) * (len + 1));
-	if (!_r)
-		return (NULL);
-	for (len++; len--;)
-		_r[len] = *--string;
-	return (_r);
+/**
+ * str_dup - Duplicate a string.
+ * @s: The string to be duplicated.
+ *
+ * Return: Pointer to the newly allocated duplicate string,
+ *         or NULL if allocation fails.
+ */
+char *str_dup(const char *str)
+{
+    char *dup;
+    size_t len;
+    size_t i;
+    i = 0;
+
+    len = str_len(str) + 1;  /* +1 for the null terminator */
+    dup = malloc(len);  /* allocate memory for the duplicate string */
+
+    if (dup != NULL)
+    {
+        while (i < len)
+        {
+            dup[i] = str[i];  /* copy each character */
+	    i++;
+        }
+    }
+
+    return dup;
 }
+
 
 /**
  * str_len - returns the length of a string
  * @s: string
  * Return: length of a string
  */
-int str_len(char *s)
+int str_len(const char *s)
 {
 	int length;
 

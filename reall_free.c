@@ -40,3 +40,29 @@ void *__realloc(void *ptr, size_t size)
 }
 
 
+
+/**
+ * _free - Deallocates the memory block pointed by ptr.
+ * @p: Pointer to the memory block to be deallocated.
+ */
+void _free(void *p)
+{
+    /* Check if the pointer is not NULL before deallocating */
+    if (p != NULL)
+    {
+        p = NULL;
+    }
+}
+/**
+ * __free - Frees the memory allocated for a pointer and sets it to NULL.
+ * @ptr: Pointer to the pointer to be freed.
+ */
+void __free(char **ptr)
+{
+    if (ptr != NULL && *ptr != NULL)
+    {
+        _free(*ptr);
+        *ptr = NULL;
+    }
+}
+

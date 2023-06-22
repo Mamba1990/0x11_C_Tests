@@ -79,7 +79,7 @@ int my_simple_shell(int mode)
 
         while (token != NULL)
         {
-            args[argCount] = strdup(token);
+            args[argCount] = str_dup(token);
             if (args[argCount] == NULL)
             {
                 perror("strdup error");
@@ -104,7 +104,7 @@ int my_simple_shell(int mode)
         args[argCount] = NULL;
 
         /* Check if the command is "exit" */
-        if (strcmp(cmd, "exit") == 0)
+        if (str_cmp(cmd, "exit") == 0)
         {
             break; /* Exit the loop if the command is "exit" */
         }
@@ -113,7 +113,7 @@ int my_simple_shell(int mode)
         path = getenv("PATH");
         if (path != NULL)
         {
-            pathEnv = strdup(path);
+            pathEnv = str_dup(path);
             if (pathEnv == NULL)
             {
                 perror("strdup error");
@@ -151,15 +151,15 @@ int my_simple_shell(int mode)
                         /* Parent process */
                         wait(&status); /* Wait for the child process to finish */
                     }
-                    /*free(fullPath);*/
+                   /* free(fullPath);*/
                     cmdFound = 1; /* Set the flag to indicate command is found*/
                     break; /* Exit the loop if the command is found and executed */
                 }
-                free(fullPath);
+                _free(fullPath);
                 pathToken = strtok(NULL, ":");
             }
 
-            free(pathEnv);
+            _free(pathEnv);
 
             if (!cmdFound)
             {
@@ -174,6 +174,6 @@ int my_simple_shell(int mode)
     }
 
     freeArguments(args);
-    free(buff);
+    _free(buff);
     return 1; /* Return 1 to indicate */
 }
